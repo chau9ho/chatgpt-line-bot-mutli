@@ -1,5 +1,5 @@
 import sys
-from .stable_diffusion import StableDiffusion  # Import the class if it's in a different file
+from .stablediffusion import StableDiffusion  # Import the class if it's in a different file
 from fastapi import APIRouter, HTTPException, Request
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
@@ -52,69 +52,57 @@ async def callback(request: Request) -> str:
 
 @handler.add(MessageEvent, message=(TextMessage))
 def handle_message(event) -> None:
-  """Event - User sent message
+    """Event - User sent message
 
-  Args:
-      event (LINE Event Object)
-  """
-  if not isinstance(event.message, TextMessage):
-      return
-
-  reply_token = event.reply_token
-  user_id = event.source.user_id
-  response = None
-
-  # Get user sent message
-  user_message = event.message.text
-  pre_prompt = girlfriend
-  refine_message = f"{pre_prompt}:\n{user_message}"
-
-  if user_message.lower().startswith("generate image:"):
-      prompt = user_message[15:].strip()  # Extract the prompt text
-      stable_diffusion.add_prompt(prompt)
-
-      try:
-          image_url = stable_diffusion.get_url()
-          image_message = ImageSendMessage(original_content_url=image_url, preview_image_url=image_url)
-          line_bot_api.reply_message(reply_token=reply_token, messages=image_message)
-      except Exception as e:
-          line_bot_api.reply_message(reply_token=reply_token, messages=TextSendMessage(text="Failed to generate image."))
-      return  # Make sure to return after handling this comman  
-  if user_message.startswith('@img'):
-        try:
-            img_crawler = ImageCrawler(nums=5)
-            img_url = img_crawler.get_url(user_message.replace('@img', ''))
-
-            image_message = ImageSendMessage(
-                original_content_url=img_url, preview_image_url=img_url
-            )
-            line_bot_api.reply_message(reply_token=reply_token, messages=image_message)
-        except:
-            line_bot_api.reply_message(
-                reply_token=reply_token,
-                messages='Image cannot encode successfully.'
-            )
+    Args:
+        event (LINE Event Object)
+    """
+    if not isinstance(event.message, TextMessage):
         return
 
-  if user_message.startswith('@chat 星座運勢'):
-    response = horoscope.get_horoscope_response(user_message)
-  elif event.source.type == 'user':
-    user_name = line_bot_api.get_profile(user_id).display_name
-    print(f'{user_name}: {user_message}')
-    memory.append(user_id, 'user', refine_message)
-    response = chat_completion(user_id, memory)
-  elif event.source.type == 'group' and user_message.startswith('@chat'):
-    group_id = event.source.group_id
-    memory.append(group_id, 'user', refine_message.replace('@chat', ''))
-    response = chat_completion(group_id, memory)
-  elif event.source.type == 'room' and user_message.startswith('@chat'):
-    room_id = event.source.room_id
-    memory.append(room_id, 'user', refine_message.replace('@chat', ''))
-    response = chat_completion(room_id, memory)
-  # Reply with same message
-  if response:
-    messages = TextSendMessage(text=response)
-    line_bot_api.reply_message(reply_token=reply_token, messages=messages)
+    reply_token = event.reply_token
+    user_id = event.source.user_id
+    response = None
+
+    # Get user sent message
+    user_message = event.message.text
+    pre_prompt = girlfriend
+    refine_message = f"{pre_prompt}:\n{user_message}"
+
+    if user_message.lower().startswith("generate image:"):
+        prompt = user_message[15:].strip()  # Extract the prompt text
+        stable_diffusion.add_prompt(prompt)
+
+        try:
+            image_url = stable_diffusion.get_url()
+            image_message = ImageSendMessage(original_content_url=image_url, preview_image_url=image_url)
+            line_bot_api.reply_message(reply_token=reply_token, messages=image_message)
+        except Exception as e:
+            error_message = f"Failed to generate image. {str(e)}"
+            line_bot_api.reply_message(reply_token=reply_token, messages=TextSendMessage(text=error_message))
+
+        print(f"Reply Token: {reply_token}")  # Move this line outside of the try-except block
+
+    elif user_message.startswith('@chat 星座運勢'):
+        response = horoscope.get_horoscope_response(user_message)
+    elif event.source.type == 'user':
+        user_name = line_bot_api.get_profile(user_id).display_name
+        print(f'{user_name}: {user_message}')
+        memory.append(user_id, 'user', refine_message)
+        response = chat_completion(user_id, memory)
+    elif event.source.type == 'group' and user_message.startswith('@chat'):
+        group_id = event.source.group_id
+        memory.append(group_id, 'user', refine_message.replace('@chat', ''))
+        response = chat_completion(group_id, memory)
+    elif event.source.type == 'room' and user_message.startswith('@chat'):
+        room_id = event.source.room_id
+        memory.append(room_id, 'user', refine_message.replace('@chat', ''))
+        response = chat_completion(room_id, memory)
+    # Reply with same message
+    if response:
+        messages = TextSendMessage(text=response)
+        line_bot_api.reply_message(reply_token=reply_token, messages=messages)
+
 
 @line_app.get("/recommend")
 def recommend_from_yt() -> None:
@@ -142,7 +130,7 @@ def recommend_from_yt() -> None:
         known_group_ids = [
             'C6d-xxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
             'Ccc-xxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-            'Cbb-xxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+            'Cbb-xxxxxxxxxxxxxxxxxxxxxxxxxxxx',
         ]
         for group_id in known_group_ids:
             line_bot_api.push_message(group_id, TextSendMessage(text=videos))

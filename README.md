@@ -6,7 +6,7 @@
 
 ## 🤖Introduction
 
-Integrate ChatGPT Bot into Line, simply enter text in the input box to start interacting with ChatGPT.
+Integrate ChatGPT Bot, Stable Diffusion, Meta Music and FaceSwap (Using Replicate) into Line, simply enter text in the input box to start interacting with ChatGPT.
 
 <img src="img/2023-10-25-10-03-47.png" width="30%" />
 
